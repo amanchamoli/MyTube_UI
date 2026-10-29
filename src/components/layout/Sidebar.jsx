@@ -23,7 +23,7 @@ import { useAuth } from '../../context/AuthContext';
 import { subscriptionService } from '../../api/subscriptionService';
 import { DEFAULT_AVATAR_SVG } from '../../utils/formatters';
 
-export default function Sidebar({ collapsed }) {
+export default function Sidebar({ collapsed, mobileOpen = false, onNavigate }) {
   const { user, isAuthenticated, openAuthModal, requireAuth } = useAuth();
   const [sideSubs, setSideSubs] = React.useState([]);
 
@@ -55,7 +55,12 @@ export default function Sidebar({ collapsed }) {
   };
 
   return (
-    <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
+    <aside
+      className={`sidebar ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}
+      onClick={(event) => {
+        if (event.target.closest('a')) onNavigate?.();
+      }}
+    >
       <NavLink
         to="/"
         className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}

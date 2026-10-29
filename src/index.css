@@ -290,6 +290,10 @@ input, textarea {
   padding: 8px 4px;
 }
 
+.sidebar-backdrop {
+  display: none;
+}
+
 .sidebar-item {
   display: flex;
   align-items: center;
@@ -1024,6 +1028,28 @@ input, textarea {
 @media (max-width: 900px) {
   .sidebar {
     display: none;
+  }
+  .sidebar.mobile-open {
+    display: flex;
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    z-index: 99;
+    width: var(--sidebar-width);
+    height: calc(100vh - var(--header-height));
+    height: calc(100dvh - var(--header-height));
+    overflow-y: auto;
+    box-shadow: var(--shadow-modal);
+  }
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: var(--header-height) 0 0;
+    z-index: 90;
+    width: 100%;
+    height: calc(100vh - var(--header-height));
+    height: calc(100dvh - var(--header-height));
+    background: rgba(0, 0, 0, 0.6);
   }
   .search-box {
     max-width: 320px;
