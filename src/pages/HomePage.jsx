@@ -1,9 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { videoService } from '../api/videoService';
 import VideoCard from '../components/video/VideoCard';
 import CategoryPills from '../components/video/CategoryPills';
-import { Film, RefreshCw, SearchX } from 'lucide-react';
+import { RefreshCw, SearchX } from 'lucide-react';
+
+const PAGE_SIZE = 12;
+const SCROLL_THROTTLE_MS = 500;
+const LOAD_MORE_THRESHOLD = 500;
 
 export default function HomePage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -11,13 +15,33 @@ export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
 
-  const fetchVideos = async () => {
-    setLoading(true);
-    setError(null);
-    try {
+  useEffect(() => {
+    let isActive = true;
+    let isFetching = false;
+    let currentPage = 1;
+    let moreAvailable = false;
+    let lastScrollCall = 0;
+    let throttleTimeout;
+
+    const fetchPage = async (page, append) => {
+      if (isFetching) return;
+      isFetching = true;
+      if (append) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+        setLoadingMore(false);
+        setVideos([]);
+        setError(null);
+      }
+
       const params = {
+        page,
+        limit: PAGE_SIZE,
         query: queryParam,
       };
       if (selectedCategory === 'Latest') {
@@ -27,19 +51,55 @@ export default function HomePage() {
         params.sortBy = 'views';
         params.sortType = 'desc';
       }
-      const res = await videoService.getVideos(params);
-      setVideos(res.videos || []);
-    } catch (err) {
-      console.error('Error fetching videos:', err);
-      setError('Unable to load video feed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  useEffect(() => {
-    fetchVideos();
-  }, [queryParam, selectedCategory]);
+      try {
+        const res = await videoService.getVideos(params);
+        if (!isActive) return;
+
+        setVideos((currentVideos) => (
+          append ? [...currentVideos, ...(res.videos || [])] : (res.videos || [])
+        ));
+        currentPage = res.page || page;
+        moreAvailable = Boolean(res.hasMore);
+      } catch (err) {
+        console.error('Error fetching videos:', err);
+        if (isActive && !append) {
+          setError('Unable to load video feed. Please try again.');
+        }
+      } finally {
+        isFetching = false;
+        if (isActive) {
+          setLoading(false);
+          setLoadingMore(false);
+        }
+      }
+    };
+
+    const handleScroll = () => {
+      if (throttleTimeout) return;
+
+      const delay = Math.max(0, SCROLL_THROTTLE_MS - (Date.now() - lastScrollCall));
+      throttleTimeout = window.setTimeout(() => {
+        throttleTimeout = null;
+        lastScrollCall = Date.now();
+
+        const nearBottom = window.innerHeight + window.scrollY
+          >= document.documentElement.scrollHeight - LOAD_MORE_THRESHOLD;
+        if (nearBottom && moreAvailable && !isFetching) {
+          fetchPage(currentPage + 1, true);
+        }
+      }, delay);
+    };
+
+    fetchPage(1, false);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      isActive = false;
+      window.removeEventListener('scroll', handleScroll);
+      window.clearTimeout(throttleTimeout);
+    };
+  }, [queryParam, selectedCategory, retryCount]);
 
   const handleSelectCategory = (cat) => {
     setSelectedCategory(cat);
@@ -92,7 +152,7 @@ export default function HomePage() {
       ) : error ? (
         <div style={{ textAlign: 'center', padding: '60px 20px' }}>
           <p style={{ color: '#ff6b6b', marginBottom: 16 }}>{error}</p>
-          <button className="pill-btn" onClick={fetchVideos}>
+          <button className="pill-btn" onClick={() => setRetryCount((count) => count + 1)}>
             <RefreshCw size={16} />
             Try Again
           </button>
@@ -104,11 +164,18 @@ export default function HomePage() {
           <p style={{ fontSize: '0.9rem' }}>Try different search keywords or remove filters.</p>
         </div>
       ) : (
-        <div className="video-grid">
-          {videos.map((vid) => (
-            <VideoCard key={vid._id} video={vid} />
-          ))}
-        </div>
+        <>
+          <div className="video-grid">
+            {videos.map((vid) => (
+              <VideoCard key={vid._id} video={vid} />
+            ))}
+          </div>
+          {loadingMore && (
+            <p style={{ textAlign: 'center', padding: '24px', color: 'var(--text-secondary)' }}>
+              Loading more videos...
+            </p>
+          )}
+        </>
       )}
     </div>
   );
