@@ -1,11 +1,9 @@
 import api from './apiClient';
-import { authService } from './authService';
 
 export const commentService = {
   // Get paginated comments for a video
   async getVideoComments(videoId, { page = 1, limit = 20 } = {}) {
     try {
-      await authService.ensureGuestSession();
       const res = await api.get(`/comments/${videoId}`, {
         params: { page, limit },
       });

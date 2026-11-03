@@ -1,5 +1,4 @@
 import api from './apiClient';
-import { authService } from './authService';
 
 // In-flight request cache to deduplicate simultaneous/rapid calls and prevent duplicate view count increments
 const videoFetchCache = new Map();
@@ -8,8 +7,6 @@ export const videoService = {
   // Fetch paginated videos from backend API
   async getVideos({ page = 1, limit = 12, query = '', sortBy = 'createdAt', sortType = 'desc', userId = '' } = {}) {
     try {
-      await authService.ensureGuestSession();
-
       const params = { page, limit, sortBy, sortType };
       if (query && query.trim()) params.query = query.trim();
       if (userId) params.userId = userId;
@@ -46,7 +43,6 @@ export const videoService = {
 
     const fetchPromise = (async () => {
       try {
-        await authService.ensureGuestSession();
         const res = await api.get(`/videos/${videoId}`);
         return res.data?.data || null;
       } catch (err) {
@@ -118,7 +114,6 @@ export const videoService = {
   // Get comments for video from backend API
   async getComments(videoId) {
     try {
-      await authService.ensureGuestSession();
       const res = await api.get(`/comments/${videoId}`);
       return res.data?.data?.docs || [];
     } catch (err) {

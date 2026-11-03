@@ -1,5 +1,4 @@
 import api from './apiClient';
-import { authService } from './authService';
 
 export const playlistService = {
   // 1. Create Playlist: POST /playlist
@@ -11,7 +10,6 @@ export const playlistService = {
   // 2. Get Playlist by ID: GET /playlist/:playlistId
   async getPlaylistById(playlistId) {
     try {
-      await authService.ensureGuestSession();
       const res = await api.get(`/playlist/${playlistId}`);
       return res.data?.data || null;
     } catch (err) {
@@ -23,7 +21,6 @@ export const playlistService = {
   // 3. Get User Playlists: GET /playlist/user/:userId
   async getUserPlaylists(userId) {
     try {
-      await authService.ensureGuestSession();
       const res = await api.get(`/playlist/user/${userId}`);
       return res.data?.data || [];
     } catch (err) {

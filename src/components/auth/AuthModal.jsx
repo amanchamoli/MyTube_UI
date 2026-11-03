@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Lock, User, Mail, UploadCloud, CheckCircle } from 'lucide-react';
+import { useState } from 'react';
+import { X, Lock, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export default function AuthModal() {
@@ -34,23 +34,6 @@ export default function AuthModal() {
       closeAuthModal();
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleQuickDemoLogin = async () => {
-    setError('');
-    setLoading(true);
-    try {
-      await login({
-        username: 'guest_1791983111578',
-        password: 'GuestPass123!'
-      });
-      closeAuthModal();
-    } catch {
-      // If that guest account is not available, try fallback
-      setError('Could not connect to demo account.');
     } finally {
       setLoading(false);
     }
@@ -179,17 +162,6 @@ export default function AuthModal() {
 
             <button type="submit" className="btn-primary" disabled={loading} style={{ marginTop: 4 }}>
               {loading ? 'Signing in...' : 'Sign In'}
-            </button>
-
-            <div className="modal-divider">or test immediately</div>
-
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={handleQuickDemoLogin}
-              disabled={loading}
-            >
-              1-Click Demo Sign In (Tester Account)
             </button>
 
             <p style={{ textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: 8 }}>

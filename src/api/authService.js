@@ -55,6 +55,8 @@ export const authService = {
       localStorage.removeItem('mytube_access_token');
       localStorage.removeItem('mytube_refresh_token');
       localStorage.removeItem('mytube_user');
+      localStorage.removeItem('mytube_guest_token');
+      localStorage.removeItem('mytube_is_guest');
       window.dispatchEvent(new Event('mytube_auth_cleared'));
     }
   },
@@ -123,40 +125,13 @@ export const authService = {
 
   // Get user public channel profile by username
   async getUserChannel(username) {
-    await this.ensureGuestSession();
     const res = await api.get(`/users/c/${username}`);
     return res.data?.data;
   },
 
   // Get current user watch history
   async getWatchHistory() {
-    await this.ensureGuestSession();
     const res = await api.get('/users/history');
     return res.data?.data || [];
   },
-
-  // Auto-acquire or ensure guest token so public routes can talk to API if protected
-  async ensureGuestSession() {
-    let token = localStorage.getItem('mytube_access_token');
-    if (token) return token;
-
-    try {
-      const guestRes = await api.post('/users/login', {
-        username: 'guest_1791983111578',
-        password: 'GuestPass123!'
-      });
-      const data = guestRes.data?.data;
-      if (data?.accessToken) {
-        localStorage.setItem('mytube_guest_token', data.accessToken);
-        if (!localStorage.getItem('mytube_access_token')) {
-          localStorage.setItem('mytube_access_token', data.accessToken);
-          localStorage.setItem('mytube_is_guest', 'true');
-        }
-        return data.accessToken;
-      }
-    } catch (e) {
-      console.warn('Could not auto-login guest user, falling back to local guest mode', e);
-    }
-    return null;
-  }
 };

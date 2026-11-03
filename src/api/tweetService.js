@@ -1,5 +1,4 @@
 import api from './apiClient';
-import { authService } from './authService';
 
 export const tweetService = {
   // Create a new tweet / community post
@@ -11,7 +10,6 @@ export const tweetService = {
   // Get tweets / community posts for a user
   async getUserTweets(userId) {
     try {
-      await authService.ensureGuestSession();
       const res = await api.get(`/tweets/user/${userId}`);
       return res.data?.data || [];
     } catch (err) {

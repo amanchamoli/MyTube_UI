@@ -6,9 +6,16 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     try {
+      if (localStorage.getItem('mytube_is_guest') === 'true') {
+        localStorage.removeItem('mytube_access_token');
+        localStorage.removeItem('mytube_refresh_token');
+        localStorage.removeItem('mytube_user');
+      }
+      localStorage.removeItem('mytube_guest_token');
+      localStorage.removeItem('mytube_is_guest');
+
       const saved = localStorage.getItem('mytube_user');
-      const isGuest = localStorage.getItem('mytube_is_guest');
-      if (saved && isGuest !== 'true') {
+      if (saved) {
         return JSON.parse(saved);
       }
     } catch {
@@ -26,16 +33,15 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     async function initAuth() {
       try {
-        const isGuest = localStorage.getItem('mytube_is_guest');
         const token = localStorage.getItem('mytube_access_token');
-        if (token && isGuest !== 'true') {
+        if (token) {
           const profile = await authService.getCurrentUser();
           if (profile) {
             setUser(profile);
           }
         }
       } catch {
-        // Guest mode fallback
+        // Session restoration is best-effort.
       } finally {
         setLoading(false);
       }
@@ -51,7 +57,6 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = async (credentials) => {
-    localStorage.removeItem('mytube_is_guest');
     const data = await authService.login(credentials);
     setUser(data.user);
     setAuthModalOpen(false);

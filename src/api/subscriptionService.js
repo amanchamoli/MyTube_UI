@@ -1,5 +1,4 @@
 import api from './apiClient';
-import { authService } from './authService';
 
 export const subscriptionService = {
   // 1. Toggle Channel Subscription: POST /subscriptions/c/:channelId
@@ -11,7 +10,6 @@ export const subscriptionService = {
   // 2. Get Subscribers of a Channel: GET /subscriptions/c/:channelId
   async getChannelSubscribers(channelId) {
     try {
-      await authService.ensureGuestSession();
       const res = await api.get(`/subscriptions/c/${channelId}`);
       const raw = res.data?.data || [];
       // Normalize [{ subscriber: { ... } }] or [{ ...subscriber }]
@@ -34,7 +32,6 @@ export const subscriptionService = {
   // 3. Get Channels a User Has Subscribed To: GET /subscriptions/u/:subscriberId
   async getSubscribedChannels(subscriberId) {
     try {
-      await authService.ensureGuestSession();
       const res = await api.get(`/subscriptions/u/${subscriberId}`);
       const raw = res.data?.data || [];
       // Normalize [{ subscribedChannel: { ... } }] or [{ ...channel }]
